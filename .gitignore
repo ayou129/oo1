@@ -1,11 +1,6 @@
-# Models (too large for Git)
-models/**/*.safetensors
-models/**/*.bin
-models/**/*.gguf
-models/**/*.pt
-models/**/*.pth
-models/**/*.zip
-models/**/*.tar.gz
+# Models (too large for Git) - ignore everything but keep directory
+models/*
+!models/.gitkeep
 
 # Logs
 logs/**/*.log
