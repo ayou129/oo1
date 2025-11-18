@@ -1,0 +1,81 @@
+# SGLang Configuration for OO1 Robot
+# Two-model setup: VL-8B (Vision) + 32B (Brain)
+
+# Global settings
+global:
+  project_name: "oo1-robot"
+  models_dir: "/home/ay/Desktop/app/oo1/models/Qwen"
+  log_dir: "/home/ay/Desktop/app/oo1/logs/sglang"
+  cuda_visible_devices: "0"
+
+# Vision Model (Eye)
+vl_model:
+  name: "Qwen3-VL-8B-Instruct-FP8"
+  model_path: "/home/ay/Desktop/app/oo1/models/Qwen/Qwen3-VL-8B-Instruct-FP8"
+  port: 8001
+
+  # SGLang runtime config
+  sglang:
+    tp: 1  # Tensor parallelism
+    enable_flashinfer: true
+    enable_dp_attention: true
+    quantization: "fp8"
+    mem_fraction_static: 0.8
+    max_running_requests: 10
+    schedule_heuristic: "lpm"  # Latest priority
+
+  # Model-specific settings
+  max_tokens: 4096
+  temperature: 0.3  # Lower for vision tasks
+  top_p: 0.9
+
+  # Input constraints
+  max_image_size: 1024
+  max_video_length: 60  # seconds
+
+# Brain Model (Decision making)
+llm_model:
+  name: "Qwen3-32B-FP8"
+  model_path: "/home/ay/Desktop/app/oo1/models/Qwen/Qwen3-32B-FP8"
+  port: 8002
+
+  # SGLang runtime config
+  sglang:
+    tp: 1
+    enable_flashinfer: true
+    enable_dp_attention: true
+    quantization: "fp8"
+    mem_fraction_static: 0.85
+    max_running_requests: 20
+    schedule_heuristic: "lpm"
+
+  # Model-specific settings
+  max_tokens: 8192
+
+  # Support for thinking mode (optional)
+  thinking_mode: true
+
+  # Temperature settings
+  temperatures:
+    thinking: 0.0  # Deterministic for reasoning
+    standard: 0.7  # Balanced for conversation
+
+# API Server settings
+api:
+  host: "0.0.0.0"
+  timeout: 60
+  enable_cors: true
+  max_concurrent_requests: 30
+
+# Health check
+health_check:
+  enabled: true
+  interval: 30  # seconds
+  timeout: 5
+
+# Logging
+logging:
+  level: "INFO"
+  format: "json"
+  console_output: true
+  file_output: true
