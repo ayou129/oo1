@@ -1,0 +1,56 @@
+# Faster-Whisper ASR Configuration for OO1 Robot
+
+# Service settings
+service:
+  name: "faster-whisper-asr"
+  port: 8003
+  host: "0.0.0.0"
+  timeout: 60
+  max_concurrent_requests: 10
+
+# Model settings
+model:
+  size: "small"  # tiny, small, medium, large
+  device: "cuda"
+  compute_type: "int8"  # int8, float16, float32
+  num_workers: 2
+  cpu_threads: 4
+
+# Language settings
+language:
+  default: "zh"  # Chinese
+  auto_detect: false
+  supported_languages:
+    - "zh"  # Chinese
+    - "en"  # English
+    - "ja"  # Japanese
+    - "ko"  # Korean
+
+# Transcription settings
+transcription:
+  beam_size: 5
+  best_of: 5
+  temperature: 0.0  # Deterministic
+  condition_on_previous_text: false
+
+  # For streaming
+  chunk_length: 30  # seconds
+  stride_length: 5  # seconds
+
+# Performance tuning
+performance:
+  gpu_memory_fraction: 0.5
+  enable_cache: true
+  cache_dir: "/tmp/whisper_cache"
+
+# Logging
+logging:
+  level: "INFO"
+  format: "json"
+  console_output: true
+  file_output: true
+
+# Health check
+health_check:
+  enabled: true
+  interval: 30  # seconds
