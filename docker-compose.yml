@@ -11,7 +11,7 @@ services:
     environment:
       - NVIDIA_VISIBLE_DEVICES=all
       - CUDA_VISIBLE_DEVICES=0
-      - MODEL_PATH=Qwen/Qwen3-32B-FP8
+      - MODEL_PATH=Qwen/Qwen3-8B-AWQ
       - VLLM_DISABLED_KERNELS=MacheteLinearKernel
       - VLLM_ATTENTION_BACKEND=FLASH_ATTN
     volumes:

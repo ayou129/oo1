@@ -82,7 +82,7 @@ curl http://127.0.0.1:8000/v1/chat/completions \
 curl http://127.0.0.1:8000/v1/chat/completions \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "Qwen/Qwen3-32B-FP8",
+    "model": "Qwen/Qwen3-8B-AWQ",
     "messages": [
       {"role": "user", "content": "你好，告诉我你是谁"}
     ],
