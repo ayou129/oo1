@@ -1,94 +1,95 @@
 version: '3.8'
 
 services:
-  # SGLang LLM Services (Brain)
-  sglang:
-    image: dustynv/sglang:0.4.7-r36.4-cu128-24.04
-    container_name: oo1_sglang
+  # vLLM LLM Services (Brain)
+  llm:
+    image: thor_vllm_container:25.08-py3-base
+    container_name: oo1_llm
+    ipc: host
+    network_mode: host
     runtime: nvidia
+    privileged: true
+    user: "0:0"
     environment:
-      - NVIDIA_VISIBLE_DEVICES=0
+      - NVIDIA_VISIBLE_DEVICES=all
       - CUDA_VISIBLE_DEVICES=0
+      - MODEL_PATH=Qwen/Qwen3-32B-FP8
+      - VLLM_DISABLED_KERNELS=MacheteLinearKernel
+      - VLLM_ATTENTION_BACKEND=FLASH_ATTN
     volumes:
-      - ./models/Qwen:/models:ro
-      - ./logs/sglang:/workspace/logs
-      - sglang_cache:/workspace/cache
+      - ./models:/root/.cache/huggingface/hub
+      - ./logs/llm:/workspace/logs
+      - ./services/llm:/workspace/llm:ro
     ports:
-      - "8001:8001"
-      - "8002:8002"
-    networks:
-      - oo1_network
+      - "8000:8000"
+    shm_size: 16gb
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8001/v1/models"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 60s
-    restart: unless-stopped
-    command: bash -c "
-      python3 -m sglang.launch_server --model-path /models/Qwen3-VL-8B-Instruct-FP8 --port 8001 --mem-fraction-static 0.8 --quantization fp8 --log-level info &
-      sleep 10 &&
-      python3 -m sglang.launch_server --model-path /models/Qwen3-32B-FP8 --port 8002 --mem-fraction-static 0.85 --quantization fp8 --log-level info &
-      wait
-      "
-
-  # Faster-Whisper ASR Service (Ears)
-  faster-whisper:
-    image: dustynv/faster-whisper:r36.4.0-cu128-24.04
-    container_name: oo1_asr
-    runtime: nvidia
-    environment:
-      - NVIDIA_VISIBLE_DEVICES=0
-      - CUDA_VISIBLE_DEVICES=0
-    volumes:
-      - ./logs/asr:/workspace/logs
-      - ./services/asr:/workspace/asr:ro
-    ports:
-      - "8003:8003"
-    networks:
-      - oo1_network
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8003/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 60s
-    restart: unless-stopped
-    working_dir: /workspace
-    command: python3 /workspace/asr/start_asr.py
-
-  # XTTS TTS Service (Mouth)
-  xtts:
-    image: dustynv/xtts:r36.3.0
-    container_name: oo1_tts
-    runtime: nvidia
-    environment:
-      - NVIDIA_VISIBLE_DEVICES=0
-      - CUDA_VISIBLE_DEVICES=0
-      - TTS_LANGUAGE=zh
-      - TTS_PORT=8004
-    volumes:
-      - ./logs/tts:/workspace/logs
-      - ./voices:/workspace/voices
-      - ./services/tts:/workspace/tts:ro
-    ports:
-      - "8004:8004"
-    networks:
-      - oo1_network
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8004/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:8000/v1/models"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 120s
     restart: unless-stopped
     working_dir: /workspace
-    command: python3 /workspace/tts/start_tts.py
+    command: bash /workspace/llm/start_llm.sh
+
+  # Faster-Whisper ASR Service (Ears) - DISABLED TEMPORARILY
+  # faster-whisper:
+  #   image: dustynv/faster-whisper:r36.4.0-cu128-24.04
+  #   container_name: oo1_asr
+  #   runtime: nvidia
+  #   environment:
+  #     - NVIDIA_VISIBLE_DEVICES=0
+  #     - CUDA_VISIBLE_DEVICES=0
+  #   volumes:
+  #     - ./logs/asr:/workspace/logs
+  #     - ./services/asr:/workspace/asr:ro
+  #   ports:
+  #     - "8003:8003"
+  #   networks:
+  #     - oo1_network
+  #   healthcheck:
+  #     test: ["CMD", "curl", "-f", "http://localhost:8003/health"]
+  #     interval: 30s
+  #     timeout: 10s
+  #     retries: 3
+  #     start_period: 60s
+  #   restart: unless-stopped
+  #   working_dir: /workspace
+  #   command: python3 /workspace/asr/start_asr.py
+
+  # XTTS TTS Service (Mouth) - DISABLED TEMPORARILY
+  # xtts:
+  #   image: dustynv/xtts:r36.3.0
+  #   container_name: oo1_tts
+  #   runtime: nvidia
+  #   environment:
+  #     - NVIDIA_VISIBLE_DEVICES=0
+  #     - CUDA_VISIBLE_DEVICES=0
+  #     - TTS_LANGUAGE=zh
+  #     - TTS_PORT=8004
+  #   volumes:
+  #     - ./logs/tts:/workspace/logs
+  #     - ./voices:/workspace/voices
+  #     - ./services/tts:/workspace/tts:ro
+  #   ports:
+  #     - "8004:8004"
+  #   networks:
+  #     - oo1_network
+  #   healthcheck:
+  #     test: ["CMD", "curl", "-f", "http://localhost:8004/health"]
+  #     interval: 30s
+  #     timeout: 10s
+  #     retries: 3
+  #     start_period: 120s
+  #   restart: unless-stopped
+  #   working_dir: /workspace
+  #   command: python3 /workspace/tts/start_tts.py
 
 networks:
   oo1_network:
     driver: bridge
 
 volumes:
-  sglang_cache:
+  llm_cache:
     driver: local
