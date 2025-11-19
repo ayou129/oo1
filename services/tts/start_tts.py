@@ -27,9 +27,11 @@ app = FastAPI(title="OO1 TTS Service")
 TTS_LANGUAGE = os.getenv("TTS_LANGUAGE", "zh")
 VOICE_DIR = os.getenv("VOICE_DIR", "/workspace/voices")
 PORT = int(os.getenv("TTS_PORT", 8004))
+TTS_DEVICE = os.getenv("TTS_DEVICE", "cuda").lower()
+USE_GPU = TTS_DEVICE in ["cuda", "gpu", "true"]
 
-print(f"Loading XTTS v2 model (language: {TTS_LANGUAGE})...")
-tts = TTS(model_name="tts_models/multilingual/multi-dataset/xtts_v2", gpu=True)
+print(f"Loading XTTS v2 model (language: {TTS_LANGUAGE}, device: {TTS_DEVICE})...")
+tts = TTS(model_name="tts_models/multilingual/multi-dataset/xtts_v2", gpu=USE_GPU)
 
 Path(VOICE_DIR).mkdir(exist_ok=True, parents=True)
 
