@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # vLLM LLM Services (Brain)
   llm:
@@ -17,7 +15,7 @@ services:
       - VLLM_DISABLED_KERNELS=MacheteLinearKernel
       - VLLM_ATTENTION_BACKEND=FLASH_ATTN
     volumes:
-      - ./models:/root/.cache/huggingface/hub
+      - ./models:/models
       - ./logs/llm:/workspace/logs
       - ./services/llm:/workspace/llm:ro
     ports:

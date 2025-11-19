@@ -2,16 +2,32 @@
 
 基于NVIDIA官方vLLM容器部署的Qwen3大语言模型服务，运行在NVIDIA Thor GPU上。
 
-## 支持的模型
+## 模型组织结构
+
+模型需放在 `./models` 目录下，支持任意子目录结构。容器将 `./models` 挂载到 `/models`：
+
+```
+./models/
+├── Qwen/
+│   ├── Qwen3-32B-FP8/                    # MODEL_PATH: Qwen/Qwen3-32B-FP8
+│   ├── Qwen3-VL-8B-Instruct-FP8/         # MODEL_PATH: Qwen/Qwen3-VL-8B-Instruct-FP8
+│   └── ...
+└── RedHatAI/
+    ├── Qwen3-30B-A3B-quantized.w4a16/    # MODEL_PATH: RedHatAI/Qwen3-30B-A3B-quantized.w4a16
+    └── ...
+```
+
+## 支持的模型格式
 
 - Qwen3-32B-FP8 (默认)
 - Qwen3-30B-A3B-quantized.w4a16
-- RedHatAI系列模型 (w4a16 / A3B量化)
-- 其他Qwen3 FP8 / AWQ / GGUF格式模型
+- Qwen3 AWQ量化模型
+- Qwen3 GGUF格式模型
+- 其他使用vLLM支持的模型
 
 ## 环境变量
 
-- `MODEL_PATH`: 模型路径 (相对于./models)
+- `MODEL_PATH`: 模型相对路径 (相对于./models)
   - 默认: `Qwen/Qwen3-32B-FP8`
   - 示例: `Qwen/Qwen3-32B-FP8` 或 `RedHatAI/Qwen3-30B-A3B-quantized.w4a16`
 
@@ -19,7 +35,9 @@
 
 基础URL: `http://127.0.0.1:8000/v1`
 
-### 1. 获取模型列表
+### 1. 获取模型列表 (获取模型ID)
+
+**重要：** 先执行此命令查看容器识别的模型ID，然后在其他请求中使用该ID
 
 ```bash
 curl http://127.0.0.1:8000/v1/models
@@ -31,7 +49,7 @@ curl http://127.0.0.1:8000/v1/models
   "object": "list",
   "data": [
     {
-      "id": "Qwen3-32B-FP8",
+      "id": "Qwen/Qwen3-32B-FP8",
       "object": "model",
       "created": 1700000000,
       "owned_by": "vllm"
@@ -40,13 +58,31 @@ curl http://127.0.0.1:8000/v1/models
 }
 ```
 
+注：`id` 字段值即为后续API请求中应使用的 `model` 值
+
 ### 2. 聊天完成 (Chat Completions)
 
+```bash
+# 将 <MODEL_ID> 替换为从 /v1/models 获取的模型ID
+curl http://127.0.0.1:8000/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "<MODEL_ID>",
+    "messages": [
+      {"role": "user", "content": "你好，告诉我你是谁"}
+    ],
+    "temperature": 0.7,
+    "max_tokens": 1024,
+    "top_p": 0.9
+  }'
+```
+
+示例（假设模型ID为 `Qwen/Qwen3-32B-FP8`）：
 ```bash
 curl http://127.0.0.1:8000/v1/chat/completions \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "Qwen3-32B-FP8",
+    "model": "Qwen/Qwen3-32B-FP8",
     "messages": [
       {"role": "user", "content": "你好，告诉我你是谁"}
     ],
@@ -84,10 +120,11 @@ curl http://127.0.0.1:8000/v1/chat/completions \
 ### 3. 流式聊天完成 (Streaming Chat Completions)
 
 ```bash
+# 将 <MODEL_ID> 替换为从 /v1/models 获取的模型ID
 curl http://127.0.0.1:8000/v1/chat/completions \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "Qwen3-32B-FP8",
+    "model": "<MODEL_ID>",
     "messages": [
       {"role": "system", "content": "你是一个有用的助手"},
       {"role": "user", "content": "写一个Hello World的Python程序"}
@@ -101,10 +138,11 @@ curl http://127.0.0.1:8000/v1/chat/completions \
 ### 4. 文本完成 (Text Completion)
 
 ```bash
+# 将 <MODEL_ID> 替换为从 /v1/models 获取的模型ID
 curl http://127.0.0.1:8000/v1/completions \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "Qwen3-32B-FP8",
+    "model": "<MODEL_ID>",
     "prompt": "Python中的装饰器是",
     "temperature": 0.7,
     "max_tokens": 256,
@@ -139,8 +177,9 @@ client = OpenAI(
     base_url="http://127.0.0.1:8000/v1",
 )
 
+# 将 "Qwen/Qwen3-32B-FP8" 替换为实际的模型ID（从 /v1/models 获取）
 response = client.chat.completions.create(
-    model="Qwen3-32B-FP8",
+    model="Qwen/Qwen3-32B-FP8",
     messages=[
         {"role": "user", "content": "用Python实现快速排序算法"}
     ],
@@ -161,8 +200,9 @@ client = OpenAI(
     base_url="http://127.0.0.1:8000/v1",
 )
 
+# 将 "Qwen/Qwen3-32B-FP8" 替换为实际的模型ID（从 /v1/models 获取）
 stream = client.chat.completions.create(
-    model="Qwen3-32B-FP8",
+    model="Qwen/Qwen3-32B-FP8",
     messages=[
         {"role": "user", "content": "描述一下人工智能的发展前景"}
     ],

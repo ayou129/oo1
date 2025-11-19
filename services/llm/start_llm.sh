@@ -35,7 +35,7 @@ export VLLM_ATTENTION_BACKEND=FLASH_ATTN
 echo "启动vLLM服务..."
 echo ""
 
-vllm serve "/root/.cache/huggingface/hub/$MODEL_PATH" \
+vllm serve "/models/$MODEL_PATH" \
   --host 0.0.0.0 \
   --port 8000 \
   --swap-space 16 \
