@@ -38,6 +38,7 @@ echo ""
 vllm serve "/models/$MODEL_PATH" \
   --host 0.0.0.0 \
   --port 8000 \
+  --served-model-name "$MODEL_PATH" \
   --swap-space 16 \
   --quantization "$QUANTIZATION" \
   --max-seq-len 3000 \
